@@ -1,4 +1,6 @@
+require('dotenv').config();
 const express = require("express");
+const cors = require("cors");
 const connectDB = require("./db");
 const authRoutes = require("./routes/auth");
 const employeeRoutes = require("./routes/employees");
@@ -7,6 +9,18 @@ const reportRoutes = require("./routes/reports");
 const dashboardRoutes = require("./routes/dashboard");
 
 const app = express();
+
+// CORS configuration
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:3000')
+  .split(',')
+  .map((s) => s.trim());
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
 // --- CONNECT TO MONGODB ---

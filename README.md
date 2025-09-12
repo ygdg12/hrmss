@@ -169,6 +169,23 @@ A comprehensive Human Resource Management System with advanced logging and repor
 4. **Access the API**
    - Server runs on `http://localhost:3000`
 
+## 🌐 Deployment (Render)
+
+This repository includes `render.yaml` to deploy both services:
+
+- Backend (`hrmss`): Node web service. Configure env vars in Render Dashboard:
+  - `MONGODB_URI`: your MongoDB connection string
+  - `JWT_SECRET`: secret for signing JWTs
+  - `CORS_ORIGINS`: comma-separated origins (e.g. your frontend URL)
+
+- Frontend (`hrms-frontend`): Static site using Vite. `VITE_API_BASE_URL` is automatically set from the backend service URL.
+
+Steps:
+1. Push to GitHub.
+2. In Render, New > Blueprint and select this repo. Render will create both services.
+3. Set `MONGODB_URI` (and optional `CORS_ORIGINS`) on the backend service.
+4. Deploy. Frontend will use the backend URL via `VITE_API_BASE_URL`.
+
 ## 📝 Usage Examples
 
 ### 1) Signup (Employee self-registration)
