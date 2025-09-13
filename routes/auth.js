@@ -78,10 +78,10 @@ router.post("/signin", async (req, res) => {
   // ✅ Hardcoded Admin login (bypass DB)
   if (email === "admin@company.com" && password === "SecurePass123") {
     const payload = {
-      id: "hardcoded-admin-id",
-      email: "admin@company.com",
-      role: "Admin",
-      employeeId: "hardcoded-employee-id"
+      id: adminFromDb._id,    
+      email: adminFromDb.email,
+      role: adminFromDb.role,
+      employeeId: adminFromDb.employeeId
     };
 
     const token = jwt.sign(payload, process.env.JWT_SECRET || "mysecret", { expiresIn: "1h" });

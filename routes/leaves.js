@@ -42,21 +42,35 @@ router.post("/request", auth, async (req, res) => {
 // Approve leave (HR/Admin)
 async function approveLeaveHandler(req, res) {
   try {
+    console.log("Approve leave request:", req.params.id);
+    console.log("User:", req.user);
+    
     const leave = await Leave.findById(req.params.id).populate("employee");
     if (!leave) return res.status(404).json({ error: "Leave not found" });
     if (leave.status !== "Pending") return res.status(400).json({ error: "Leave is not pending" });
 
     const employee = leave.employee;
     const key = leave.type.toLowerCase();
+    
+    console.log("Employee:", employee);
+    console.log("Leave type:", leave.type);
+    console.log("Key:", key);
+    console.log("Employee leaveBalance:", employee.leaveBalance);
 
-    // Deduct balance if tracked
-    if (employee.leaveBalance[key] !== undefined) {
+    // Deduct balance if tracked (only if employee has leaveBalance and the key exists)
+    if (employee.leaveBalance && employee.leaveBalance[key] !== undefined) {
+      console.log(`Current ${key} balance:`, employee.leaveBalance[key]);
+      console.log("Requested days:", leave.days);
+      
       if (employee.leaveBalance[key] < leave.days) {
         return res.status(400).json({ error: `Insufficient ${leave.type} balance` });
       }
       employee.leaveBalance[key] -= leave.days;
       employee.lastLeaveRequest = new Date();
       await employee.save();
+      console.log(`Updated ${key} balance:`, employee.leaveBalance[key]);
+    } else {
+      console.log("No leave balance tracking for this leave type");
     }
 
     leave.status = "Approved";
@@ -64,9 +78,19 @@ async function approveLeaveHandler(req, res) {
     leave.decidedAt = new Date();
     await leave.save();
 
-    await logEmployeeAction("Leave Approved", employee, req.user.email, req);
+    console.log("Leave saved successfully");
+    
+    // Try to log the action, but don't fail if logging fails
+    try {
+      await logEmployeeAction("Leave Approved", employee, req.user.email, req);
+      console.log("Action logged successfully");
+    } catch (logError) {
+      console.error("Logging error (non-fatal):", logError.message);
+    }
+    
     res.json(leave);
   } catch (e) {
+    console.error("Error in approveLeaveHandler:", e);
     res.status(500).json({ error: e.message });
   }
 }
@@ -76,6 +100,15 @@ router.put("/:id/approve", auth, checkRole(["Admin", "HR"]), approveLeaveHandler
 // Reject leave (HR/Admin)
 async function rejectLeaveHandler(req, res) {
   try {
+    console.log("Reject leave request:", req.params.id);
+    console.log("User:", req.user);
+    
+    // Check if user object exists and has required properties
+    if (!req.user || !req.user.id) {
+      console.error("User object missing or invalid:", req.user);
+      return res.status(401).json({ error: "User authentication invalid" });
+    }
+    
     const leave = await Leave.findById(req.params.id).populate("employee");
     if (!leave) return res.status(404).json({ error: "Leave not found" });
     if (leave.status !== "Pending") return res.status(400).json({ error: "Leave is not pending" });
@@ -85,9 +118,19 @@ async function rejectLeaveHandler(req, res) {
     leave.decidedAt = new Date();
     await leave.save();
 
-    await logEmployeeAction("Leave Rejected", leave.employee, req.user.email, req);
+    console.log("Leave saved successfully");
+    
+    // Try to log the action, but don't fail if logging fails
+    try {
+      await logEmployeeAction("Leave Rejected", leave.employee, req.user.email, req);
+      console.log("Action logged successfully");
+    } catch (logError) {
+      console.error("Logging error (non-fatal):", logError.message);
+    }
+    
     res.json(leave);
   } catch (e) {
+    console.error("Error in rejectLeaveHandler:", e);
     res.status(500).json({ error: e.message });
   }
 }
