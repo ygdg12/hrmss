@@ -11,7 +11,7 @@ const dashboardRoutes = require("./routes/dashboard");
 const app = express();
 
 // CORS configuration
-const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:3000')
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:3000,https://ziway-rose-plc-hrms.vercel.app/')
   .split(',')
   .map((s) => s.trim());
 app.use(cors({
