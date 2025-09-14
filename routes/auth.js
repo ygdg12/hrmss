@@ -4,6 +4,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Employee = require("../models/Employee");
+const auth = require("../middleware/authMiddleware");
 
 // SIGNUP (Employee self-registration)
 router.post("/signup", async (req, res) => {
@@ -77,10 +78,10 @@ router.post("/signin", async (req, res) => {
   // ✅ Hardcoded Admin login (bypass DB)
   if (email === "admin@company.com" && password === "SecurePass123") {
     const payload = {
-      id: "hardcoded-admin-id",
-      email: "admin@company.com",
-      role: "Admin",
-      employeeId: "hardcoded-employee-id"
+      id: adminFromDb._id,    
+      email: adminFromDb.email,
+      role: adminFromDb.role,
+      employeeId: adminFromDb.employeeId
     };
 
     const token = jwt.sign(payload, process.env.JWT_SECRET || "mysecret", { expiresIn: "1h" });
@@ -172,3 +173,33 @@ router.get("/verify", (req, res) => {
 });
 
 module.exports = router;
+
+// --- CHANGE PASSWORD ---
+router.post("/change-password", auth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: "New password must be at least 6 characters" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // If user has a password set, verify current
+    if (user.password) {
+      if (!currentPassword) {
+        return res.status(400).json({ error: "Current password is required" });
+      }
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) return res.status(400).json({ error: "Current password is incorrect" });
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    user.password = hashed;
+    await user.save();
+
+    res.json({ message: "Password updated successfully" });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});

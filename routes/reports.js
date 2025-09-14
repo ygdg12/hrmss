@@ -128,7 +128,7 @@ router.get("/leave-usage", authMiddleware, checkRole(["Admin", "HR"]), async (re
 
     const leaves = await Leave.find(filter)
       .populate('employee', 'firstName lastName employeeId department')
-      .populate('approvedBy', 'firstName lastName');
+      .populate('decidedBy', 'firstName lastName');
 
     // Filter by department if specified
     let filteredLeaves = leaves;
