@@ -22,6 +22,35 @@ app.use("/api/shifts", require("./routes/shifts"));
 
 app.use("/api/dashboard", dashboardRoutes);
 
+// --- HEALTH CHECK ENDPOINT ---
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "OK",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || "development"
+  });
+});
+
+// --- ROOT ENDPOINT ---
+app.get("/", (req, res) => {
+  res.json({
+    message: "HRMS API Server",
+    version: "1.0.0",
+    status: "running",
+    endpoints: {
+      auth: "/api/auth",
+      employees: "/api/employees",
+      leaves: "/api/leaves",
+      attendance: "/api/attendance",
+      shifts: "/api/shifts",
+      reports: "/api/reports",
+      dashboard: "/api/dashboard",
+      health: "/health"
+    }
+  });
+});
+
 // --- START SERVER ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
