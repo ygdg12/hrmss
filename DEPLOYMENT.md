@@ -17,16 +17,48 @@ Before deploying, you need to set up the following environment variables in Rend
 1. **MONGODB_URI**: Your MongoDB Atlas connection string
    - Format: `mongodb+srv://username:password@cluster.mongodb.net/database_name?retryWrites=true&w=majority`
    - Get this from your MongoDB Atlas dashboard
+   - **IMPORTANT**: Never commit this to your repository
 
 2. **JWT_SECRET**: A secure secret key for JWT token signing
    - Generate a strong random string (at least 32 characters)
    - Example: `your-super-secret-jwt-key-here-32-chars-min`
+   - **IMPORTANT**: Keep this secret and never commit it to your repository
 
 ### Optional Environment Variables
 
 - **JWT_EXPIRE**: JWT token expiration time (default: 7d)
 - **MAX_FILE_SIZE**: Maximum file upload size in bytes (default: 5242880 = 5MB)
 - **UPLOAD_PATH**: Path for file uploads (default: ./uploads)
+- **CORS_ORIGINS**: Comma-separated list of allowed origins (default: "*" for production)
+- **NODE_ENV**: Environment mode (automatically set to "production" in render.yaml)
+
+## Project Structure for Deployment
+
+The project has been optimized for Render deployment with the following structure:
+
+```
+├── .env.example          # Template for environment variables
+├── .gitignore           # Git ignore file (excludes .env, node_modules, etc.)
+├── Procfile             # Process file for deployment platforms
+├── render.yaml          # Render deployment configuration
+├── package.json         # Dependencies and scripts
+├── index.js            # Main application file
+├── db.js               # Database connection (secure, no hardcoded credentials)
+├── middleware/         # Authentication and utility middleware
+├── models/            # MongoDB models
+├── routes/            # API routes
+├── utils/             # Utility functions
+└── uploads/           # File upload directory (not persistent on free tier)
+```
+
+### Security Improvements
+
+- ✅ Removed hardcoded MongoDB credentials
+- ✅ Environment variables properly configured
+- ✅ Enhanced error handling middleware
+- ✅ Improved CORS configuration
+- ✅ Better health check endpoint
+- ✅ Proper .gitignore to exclude sensitive files
 
 ## Step 2: Deploy to Render
 
@@ -68,8 +100,32 @@ Before deploying, you need to set up the following environment variables in Rend
 After successful deployment, test these endpoints:
 
 - **Health Check**: `GET https://your-app.onrender.com/health`
+  - Returns detailed system information including memory usage, uptime, and process details
 - **API Info**: `GET https://your-app.onrender.com/`
+  - Returns API documentation and available endpoints
 - **Authentication**: `POST https://your-app.onrender.com/api/auth/login`
+  - Test user authentication
+
+### Enhanced Health Check Response
+
+The health check endpoint now provides comprehensive system information:
+
+```json
+{
+  "status": "OK",
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "uptime": 3600,
+  "environment": "production",
+  "version": "1.0.0",
+  "memory": {
+    "rss": 45678912,
+    "heapTotal": 20971520,
+    "heapUsed": 15728640,
+    "external": 1234567
+  },
+  "pid": 1234
+}
+```
 
 ## API Endpoints
 
@@ -117,14 +173,53 @@ For production deployment, consider:
 4. **Security**: Use HTTPS, implement rate limiting, and proper CORS
 5. **Scaling**: Consider upgrading to a paid plan for better performance
 
+## Deployment Checklist
+
+Before deploying, ensure you have:
+
+- [ ] Created a MongoDB Atlas cluster and obtained connection string
+- [ ] Generated a secure JWT secret (32+ characters)
+- [ ] Set up your Git repository (GitHub, GitLab, or Bitbucket)
+- [ ] Committed all code changes (excluding .env file)
+- [ ] Verified all environment variables are properly configured
+- [ ] Tested the application locally with production environment variables
+
+## Quick Deploy Commands
+
+```bash
+# 1. Initialize git repository (if not already done)
+git init
+git add .
+git commit -m "Initial commit - ready for deployment"
+
+# 2. Add remote repository
+git remote add origin <your-repository-url>
+git push -u origin main
+
+# 3. Deploy to Render
+# - Go to Render dashboard
+# - Create new Web Service
+# - Connect your repository
+# - Configure environment variables
+# - Deploy!
+```
+
 ## Support
 
 If you encounter issues:
 
 1. Check the Render documentation
-2. Review your application logs
-3. Verify your environment variables
-4. Test your API endpoints
+2. Review your application logs in Render dashboard
+3. Verify your environment variables are set correctly
+4. Test your API endpoints using the health check
+5. Check MongoDB Atlas connection and network access
+
+### Common Error Solutions
+
+- **Build Failures**: Ensure all dependencies are in `package.json`
+- **Database Connection**: Verify MongoDB URI and network access
+- **Environment Variables**: Double-check all required variables are set
+- **CORS Issues**: Verify CORS_ORIGINS configuration
 
 ---
 

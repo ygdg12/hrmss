@@ -6,6 +6,8 @@ services:
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /health
+    autoDeploy: true
+    branch: main
     envVars:
       - key: NODE_ENV
         value: production
@@ -19,3 +21,5 @@ services:
         value: 5242880
       - key: UPLOAD_PATH
         value: ./uploads
+      - key: CORS_ORIGINS
+        value: "*"
