@@ -75,47 +75,34 @@ router.post("/signup", async (req, res) => {
 router.post("/signin", async (req, res) => {
   const { email, password } = req.body;
 
-  // ✅ Hardcoded Admin login (bypass DB)
-  if (email === "admin@company.com" && password === "SecurePass123") {
-    const payload = {
-      id: adminFromDb._id,    
-      email: adminFromDb.email,
-      role: adminFromDb.role,
-      employeeId: adminFromDb.employeeId
-    };
-
-    const token = jwt.sign(payload, process.env.JWT_SECRET || "mysecret", { expiresIn: "1h" });
-
-    return res.json({
-      message: "Admin login successful",
-      token,
-      user: payload
-    });
-  }
-
-  // 🟢 Normal user login
   if (!email || !password) {
     return res.status(400).json({ error: "Email and password are required" });
   }
 
   try {
+    // Find user
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ error: "Invalid email or password" });
 
+    // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ error: "Invalid email or password" });
 
-    // Generate JWT
-    const token = jwt.sign(
-      { id: user._id, role: user.role, employeeId: user.employeeId },
-      process.env.JWT_SECRET || "mysecret",
-      { expiresIn: "1h" }
-    );
+    // Create payload
+    const payload = {
+      id: user._id,
+      email: user.email,
+      role: user.role,          // 👈 "Admin" or "Staff"
+      employeeId: user.employeeId,
+    };
+
+    // Sign JWT
+    const token = jwt.sign(payload, process.env.JWT_SECRET || "mysecret", { expiresIn: "1h" });
 
     res.json({
-      message: "Login successful",
+      message: `${user.role} login successful`,
       token,
-      user: { email: user.email, role: user.role },
+      user: payload,
     });
   } catch (err) {
     console.error("Signin error:", err);

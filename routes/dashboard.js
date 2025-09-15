@@ -88,7 +88,7 @@ router.get("/employee", authMiddleware, async (req, res) => {
     
     // Get employee's recent activities
     const recentActivities = await Log.find({ 
-      userId: req.user._id,
+      userId: req.user.id,
       timestamp: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } // Last 30 days
     })
       .sort({ timestamp: -1 })
@@ -98,7 +98,7 @@ router.get("/employee", authMiddleware, async (req, res) => {
     // Calculate leave utilization
     const totalLeaveDays = leaveRequests
       .filter(leave => leave.status === 'Approved')
-      .reduce((sum, leave) => sum + leave.daysRequested, 0);
+      .reduce((sum, leave) => sum + (leave.days || 0), 0);
     
     const dashboard = {
       employee: {
